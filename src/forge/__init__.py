@@ -120,3 +120,18 @@ def getFolderContent(folderId, projectId, access_token):
     response = requests.get( url, headers=headers, data = payload)
     content = json.loads(response.text.encode('utf8'))
     return content['data']
+
+def travelFolders(folderId , projectId, access_token, result):
+    content = getFolderContent(folderId, projectId, access_token)
+    for c  in content:
+        if c['type'] == 'folders':
+            travelFolders(c['id'], projectId, access_token, result)
+        elif c['type'] == 'items:autodesk.bim360:File': # and '.rvt' in c['attributes']['displayName']
+            result.append(c)
+
+
+
+def getRevitFiles( projectId, access_token):
+    content = []
+    travelFolders('urn:adsk.wipprod:fs.folder:co.9lgC_unGTT-cHObgGRatgA', projectId, access_token, content)
+    print(content)

@@ -1,5 +1,5 @@
 
-from forge import Authenticate, getHub, getProjects, getFolderContent
+from forge import Authenticate, getHub, getProjects, getRevitFiles
 
 
 if __name__ == '__main__':
@@ -9,5 +9,5 @@ if __name__ == '__main__':
         if hubId:
             projects = getProjects(hubId)
             for project in projects:
-                content = getFolderContent('urn:adsk.wipprod:fs.folder:co.9lgC_unGTT-cHObgGRatgA', project, access_token)
+                getRevitFiles(project, access_token)
                 
