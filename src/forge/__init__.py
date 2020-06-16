@@ -1,7 +1,7 @@
 import requests
 import json
 
-credentials_file = "./Credentials.txt"
+credentials_file = "src\\Credentials.txt"
 base_url = 'https://developer.api.autodesk.com/'
 access_token = None
 current_hub_name = "ADN" 
@@ -126,7 +126,7 @@ def travelFolders(folderId , projectId, access_token, result):
     for c  in content:
         if c['type'] == 'folders':
             travelFolders(c['id'], projectId, access_token, result)
-        elif c['type'] == 'items:autodesk.bim360:File': # and '.rvt' in c['attributes']['displayName']
+        elif c['type'] == 'items': # and '.rvt' in c['attributes']['displayName']
             result.append(c)
 
 
