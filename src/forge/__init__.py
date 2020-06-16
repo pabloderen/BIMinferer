@@ -126,12 +126,25 @@ def travelFolders(folderId , projectId, access_token, result):
     for c  in content:
         if c['type'] == 'folders':
             travelFolders(c['id'], projectId, access_token, result)
-        elif c['type'] == 'items': # and '.rvt' in c['attributes']['displayName']
+        elif (c['type'] == 'items' 
+        and ".rvt"  in c['attributes']['displayName']
+        ): # and '.rvt' in c['attributes']['displayName']
             result.append(c)
 
+def get_topfolders(hub_id,project_id,access_token):
+    url= "https://developer.api.autodesk.com/project/v1/hubs/%s/projects/%s/topFolders" % (hub_id, project_id)
+    payload = {}
+    headers = {
+        'Authorization': 'Bearer %s' % access_token
+    }
 
+    response = requests.get( url, headers=headers, data = payload)
+    content = json.loads(response.text.encode('utf8'))
+    for folder in content['data']:
+        if folder['attributes']['displayName']=="Project Files":
+            return folder["id"]
 
-def getRevitFiles( projectId, access_token):
+def getRevitFiles( projectfolder, projectId, access_token):
     content = []
-    travelFolders('urn:adsk.wipprod:fs.folder:co.9lgC_unGTT-cHObgGRatgA', projectId, access_token, content)
+    travelFolders(projectfolder, projectId, access_token, content)
     print(content)

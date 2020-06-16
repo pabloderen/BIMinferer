@@ -1,5 +1,5 @@
 
-from forge import Authenticate, getHub, getProjects, getRevitFiles
+from forge import Authenticate, getHub, getProjects, getRevitFiles,get_topfolders
 
 
 if __name__ == '__main__':
@@ -9,5 +9,6 @@ if __name__ == '__main__':
         if hubId:
             projects = getProjects(hubId)
             for project in projects:
-                getRevitFiles(project, access_token)
+                projectfolder=get_topfolders(hubId,project,access_token)
+                getRevitFiles(projectfolder, project, access_token)
                 
