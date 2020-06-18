@@ -147,7 +147,7 @@ def get_topfolders(hub_id,project_id,access_token):
         if folder['attributes']['displayName']=="Project Files":
             return folder["id"]
 
-def getItem(project_id, item_id, access_token):
+def getForgeItem(project_id, item_id, access_token):
     url = base_url + '/data/v1/projects/%s/items/%s' % (project_id, item_id['id'])
     payload = {}
     headers = {
@@ -157,7 +157,7 @@ def getItem(project_id, item_id, access_token):
     content = json.loads(response.text.encode('utf8'))
     return content['included'][0]['relationships']['derivatives']['data']['id']
 
-def getDerivativeUrn(urn, access_token):
+def getDBDerivativeUrn(urn, access_token):
     url = base_url + '/modelderivative/v2/designdata/%s/manifest' % urn
     payload = {}
     headers = {
@@ -170,24 +170,24 @@ def getDerivativeUrn(urn, access_token):
             return c['urn']
     return None
 
-def createChunks(content):
+def createChunks(contentByteSize):
 
-    limit  = 20000000
-    if content < limit:
-        return ['bytes=0-%s' % content]
+    ByteSizeLimit  = 20000000
+    if contentByteSize < ByteSizeLimit:
+        return ['bytes=0-%s' % contentByteSize]
     
-    previous = 0
-    output = []
-    for s in range(limit,content, limit):
-        if s> content:
-            s = content
-        _range = 'bytes=%s-%s' % (previous,s)
-        output.append(_range)
-        previous = s+1
+    minChunkRange = 0
+    resultChunks = []
+    for s in range(ByteSizeLimit,contentByteSize, ByteSizeLimit):
+        if s> contentByteSize:
+            s = contentByteSize
+        _range = 'bytes=%s-%s' % (minChunkRange,s)
+        resultChunks.append(_range)
+        minChunkRange = s+1
 
-    _range = 'bytes=%s-%s' % (previous,content)
-    output.append(_range)
-    return output
+    _range = 'bytes=%s-%s' % (minChunkRange,contentByteSize)
+    resultChunks.append(_range)
+    return resultChunks
 
 def downloadDerivative(urn,derivativeUrn, access_token, projectId):
     
@@ -204,11 +204,11 @@ def downloadDerivative(urn,derivativeUrn, access_token, projectId):
     chunks = createChunks(content)
 
     with requests.Session() as session:
-        for i, c in enumerate(chunks):
+        for i, chunk in enumerate(chunks):
             url = base_url+  '/modelderivative/v2/designdata/%s/manifest/%s' % (urn, derivativeUrn)
             headers = {
                 'Authorization': 'Bearer %s' % access_token,
-                'Range': c
+                'Range': chunk
             }
             response = requests.get( url, headers=headers)
 
@@ -218,10 +218,10 @@ def downloadDerivative(urn,derivativeUrn, access_token, projectId):
 
 
     #Join parts
-    destinyPath = 'db\\'
-    destinyDB = r'db\\%s.sdb' % projectId.replace("urn:adsk.wipprod:dm.lineage:","")
-    destination = open(destinyDB, 'wb')
-    for filename in iglob(os.path.join(destinyPath, '*.part')):
+    dbFolder = 'db\\'
+    dbDestinationPath = r'db\\%s.sdb' % projectId.replace("urn:adsk.wipprod:dm.lineage:","")
+    destination = open(dbDestinationPath, 'wb')
+    for filename in iglob(os.path.join(dbFolder, '*.part')):
         shutil.copyfileobj(open(filename, 'rb'), destination)
         os.remove(filename)
     destination.close()
@@ -229,10 +229,10 @@ def downloadDerivative(urn,derivativeUrn, access_token, projectId):
 
 
 def getRevitFiles( projectfolder, projectId, access_token):
-    content = []
+    projectRVTs = []
     access_token = Authenticate()
-    travelFoldersForRvts(projectfolder, projectId, access_token, content)
-    for model in content:
-        urn  = getItem(projectId, model, access_token)
-        dbUrn = getDerivativeUrn(urn, access_token)
-        downloadDerivative(urn, dbUrn, access_token, model['id'])
+    travelFoldersForRvts(projectfolder, projectId, access_token, projectRVTs)
+    for RVTurn in projectRVTs:
+        urn  = getForgeItem(projectId, RVTurn, access_token)
+        dbUrn = getDBDerivativeUrn(urn, access_token)
+        downloadDerivative(urn, dbUrn, access_token, RVTurn['id'])
