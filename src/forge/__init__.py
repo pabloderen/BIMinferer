@@ -323,3 +323,62 @@ def getDBFilesFromHub():
 		projectRVTs = []
 		visitFoldersForRvtsURN(projectfolder, project, access_token, projectRVTs)
 		[getRVTObject( project, RVTUrn) for RVTUrn in projectRVTs]
+
+		
+def downloadmodelthree(urn, guid, access_token, fileName):
+	"""Download the object from its derivative urn
+	urn : urn of the model
+	
+	derivativeUrn: urn of the object to download
+	access_token : access token from credentials
+	fileName : name of the file once it's downloaded
+	
+	"""
+	
+	url = base_url+  'modelderivative/v2/designdata/ %s/metadata/ %s' % (urn, guid)
+	headers = {
+	}
+	response = requests.head( url, headers=headers)
+
+	if response.status_code != 200:
+		print("Error retrieving derivative heads")
+		return None
+	content = int(response.headers._store['content-length'][1])
+	chunks = createChunks(content)
+
+	with requests.Session() as session:
+		for i, chunk in enumerate(chunks):
+			url = base_url+  'modelderivative/v2/designdata/ %s/metadata/ %s' % (urn, guid)
+			headers = {
+				'Authorization': 'Bearer %s' % access_token,
+				'Range': chunk
+			}
+			response = requests.get( url, headers=headers)
+
+			if response.status_code != 200:
+				with open('db\\%s.part' % i, 'wb') as f:
+					f.write(response.content)
+
+
+	#Join parts
+	dbFolder = 'db\\'
+	dbDestinationPath = r'db\\%s.sdb' % fileName.replace("urn:adsk.wipprod:dm.lineage:","")
+	destination = open(dbDestinationPath, 'wb')
+	for filename in iglob(os.path.join(dbFolder, '*.part')):
+		shutil.copyfileobj(open(filename, 'rb'), destination)
+		os.remove(filename)
+	destination.close()
+
+	if destination.closed():
+		return True
+	return False
+
+	
+def getJsonFiles( projectId, RVTurn):
+	global access_token
+	access_token = Authenticate()
+	urn  = getItemDerivativeURN(projectId, RVTurn, access_token)
+	dbUrn = getObjectDerivativeUrn(urn, access_token, 'json')
+	isDownloaded = downloadmodelthree(urn, dbUrn, access_token, RVTurn['id'])
+	if isDownloaded:
+		print("Model %s object Downloaded" % RVTurn)
