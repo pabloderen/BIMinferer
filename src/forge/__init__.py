@@ -4,7 +4,7 @@ from glob import iglob
 import shutil
 import os
 
-credentials_file = "src\Credentials.txt"
+credentials_file = r"src\Credentials.txt"
 base_url = 'https://developer.api.autodesk.com/'
 access_token = None
 current_hub_name = "ADN" 
@@ -12,7 +12,7 @@ current_hub_id = ""
 projects = {}
 
 def parse_credentials(filename):
-    	"Parse credentials from given text file."
+	"Parse credentials from given text file."
 	f = open( filename )
 	lines = f.readlines()
 	f.close()
@@ -261,7 +261,7 @@ def downloadDerivativeObject(urn, derivativeUrn, access_token, fileName):
 				'Authorization': 'Bearer %s' % access_token,
 				'Range': chunk
 			}
-			response = requests.get( url, headers=headers)
+			response = session.get( url, headers=headers)
 
 			if response.status_code != 200:
 				with open('db\\%s.part' % i, 'wb') as f:
@@ -288,7 +288,7 @@ def getRVTObject( projectId, RVTurn):
 	access_token = Authenticate()
 	urn  = getItemDerivativeURN(projectId, RVTurn, access_token)
 	dbUrn = getObjectDerivativeUrn(urn, access_token, 'json')
-	isDownloaded = downloadDerivativeObject(urn, dbUrn, access_token, RVTurn['id'],'json' )
+	isDownloaded = downloadDerivativeObject(urn, dbUrn, access_token, RVTurn['id']+".json" )
 	if isDownloaded:
 		print("Model %s object Downloaded" % RVTurn)
 
@@ -306,7 +306,7 @@ def getDBFilesFromHub():
 	print("Credentials OK")
 
 	hubId = getHub(access_token, 'ADN')
-	if hubId:
+	if not hubId:
 		print("Error retriving hub")
 		return
 	print("Hub OK")
@@ -320,7 +320,6 @@ def getDBFilesFromHub():
 	print("Projects OK")
 	for project in projects:
 		projectfolder=get_topfolders(hubId,project,access_token)
-		for projectId in projectfolder:
-			projectRVTs = []
-			visitFoldersForRvtsURN(projectfolder, projectId, access_token, projectRVTs)
-			[getRVTObject( projectId, RVTUrn) for RVTUrn in projectRVTs]
+		projectRVTs = []
+		visitFoldersForRvtsURN(projectfolder, project, access_token, projectRVTs)
+		[getRVTObject( project, RVTUrn) for RVTUrn in projectRVTs]
