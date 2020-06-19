@@ -190,7 +190,8 @@ def getObjectDerivativeUrn(urn, access_token, type = None):
 		for children in derivatives[0]['children']:
 			if children['type'] == contentType :
 				for c  in children['children']:
-					if c['mime'] == 'application/autodesk-svf':
+					if c['type'] == 'resource' and c['mime'] == 'application/autodesk-svf':
+
 						return c['urn']
 
 	if type == 'db':
@@ -199,7 +200,7 @@ def getObjectDerivativeUrn(urn, access_token, type = None):
 		contentType = 'application/json'
 
 
-	for children in derivatives['derivatives'][0]['children']:
+	for children in derivatives[0]['children']:
 		if children['mime'] == contentType :
 			return children['urn']
 	return None
@@ -277,7 +278,7 @@ def downloadDerivativeObject(urn, derivativeUrn, access_token, fileName):
 		os.remove(filename)
 	destination.close()
 
-	if destination.closed():
+	if destination.closed:
 		return True
 	return False
 
@@ -322,9 +323,9 @@ def getDBFilesFromHub():
 		projectfolder=get_topfolders(hubId,project,access_token)
 		projectRVTs = []
 		visitFoldersForRvtsURN(projectfolder, project, access_token, projectRVTs)
-		[getRVTObject( project, RVTUrn) for RVTUrn in projectRVTs]
+		[getJsonFiles( project, RVTUrn) for RVTUrn in projectRVTs]
 
-		
+
 def downloadmodelthree(urn, guid, access_token, fileName):
 	"""Download the object from its derivative urn
 	urn : urn of the model
@@ -335,8 +336,9 @@ def downloadmodelthree(urn, guid, access_token, fileName):
 	
 	"""
 	
-	url = base_url+  'modelderivative/v2/designdata/ %s/metadata/ %s' % (urn, guid)
+	url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s' % (urn, guid)
 	headers = {
+		'Authorization': 'Bearer %s' % access_token
 	}
 	response = requests.head( url, headers=headers)
 
@@ -348,7 +350,7 @@ def downloadmodelthree(urn, guid, access_token, fileName):
 
 	with requests.Session() as session:
 		for i, chunk in enumerate(chunks):
-			url = base_url+  'modelderivative/v2/designdata/ %s/metadata/ %s' % (urn, guid)
+			url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s' % (urn, guid)
 			headers = {
 				'Authorization': 'Bearer %s' % access_token,
 				'Range': chunk
@@ -374,11 +376,55 @@ def downloadmodelthree(urn, guid, access_token, fileName):
 	return False
 
 	
+def getItemMetadata(urn,access_token):
+	"""Returns the item derivative urn
+
+	project_id : id of the project
+	
+	item_id : id of the item
+		
+	access_token : access token from credentials
+	"""
+	url = base_url + '/modelderivative/v2/designdata/%s/metadata' % urn
+	payload = {}
+	headers = {
+		'Authorization': 'Bearer %s' % access_token
+	}
+	response = requests.get( url, headers=headers, data = payload)
+	content = json.loads(response.text.encode('utf8'))
+	return content['data']["metadata"][0]['guid']
+
+
+
+	
 def getJsonFiles( projectId, RVTurn):
 	global access_token
 	access_token = Authenticate()
 	urn  = getItemDerivativeURN(projectId, RVTurn, access_token)
-	dbUrn = getObjectDerivativeUrn(urn, access_token, 'json')
-	isDownloaded = downloadmodelthree(urn, dbUrn, access_token, RVTurn['id'])
+	dbUrn = getObjectDerivativeUrn(urn, access_token, 'svf')
+	metadata=getItemMetadata(urn,access_token)
+	isDownloaded = getItemMetadataUid(urn, access_token, metadata)
 	if isDownloaded:
 		print("Model %s object Downloaded" % RVTurn)
+
+def getItemMetadataUid(urn,access_token,metadata):
+	"""Returns the item derivative urn
+
+	project_id : id of the project
+	
+	item_id : id of the item
+		
+	access_token : access token from credentials
+	"""
+	url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s' % (urn, metadata)	
+	
+	payload = {}
+	headers = {
+		'Authorization': 'Bearer %s' % access_token
+	}
+	response = requests.get( url, headers=headers, data = payload)
+	content = json.loads(response.text.encode('utf8'))
+	with open("demo.json","w") as f:
+		f.write(response.text)
+
+	return 0 
