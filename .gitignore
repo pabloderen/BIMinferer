@@ -4,4 +4,4 @@ CredentialsFile.txt
 src/Credentials.txt
 *.sdb
 *.part
-}demo.json
+db/

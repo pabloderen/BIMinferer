@@ -3,6 +3,7 @@ import json
 from glob import iglob
 import shutil
 import os
+import time
 
 credentials_file = r"src\Credentials.txt"
 base_url = 'https://developer.api.autodesk.com/'
@@ -355,7 +356,7 @@ def downloadmodelthree(urn, guid, access_token, fileName):
                 'Authorization': 'Bearer %s' % access_token,
                 'Range': chunk
             }
-            response = requests.get( url, headers=headers)
+            response = session.get( url, headers=headers)
 
             if response.status_code != 200:
                 with open('db\\%s.part' % i, 'wb') as f:
@@ -391,8 +392,10 @@ def getItemMetadata(urn,access_token):
         'Authorization': 'Bearer %s' % access_token
     }
     response = requests.get( url, headers=headers, data = payload)
-    content = json.loads(response.text.encode('utf8'))
-    return content['data']["metadata"][0]['guid']
+    if response.status_code == 200:
+        content = json.loads(response.text.encode('utf8'))
+        return content['data']["metadata"][0]['guid']
+    return None
 
 
 
@@ -401,11 +404,12 @@ def getJsonFiles( projectId, RVTurn):
     global access_token
     access_token = Authenticate()
     urn  = getItemDerivativeURN(projectId, RVTurn, access_token)
-    dbUrn = getObjectDerivativeUrn(urn, access_token, 'svf')
+    #dbUrn = getObjectDerivativeUrn(urn, access_token, 'svf')
     metadata=getItemMetadata(urn,access_token)
-    isDownloaded = getItemMetadataUid(urn, access_token, metadata)
-    if isDownloaded:
-        print("Model %s object Downloaded" % RVTurn)
+    if metadata:
+        isDownloaded = getItemMetadataUid(urn, access_token, metadata)
+        if isDownloaded:
+            print("Model %s object Downloaded" % RVTurn)
 
 def getItemMetadataUid(urn,access_token,metadata):
     """Returns the item derivative urn
@@ -416,15 +420,19 @@ def getItemMetadataUid(urn,access_token,metadata):
         
     access_token : access token from credentials
     """
-    url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s' % (urn, metadata)	
+    url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s/properties' % (urn, metadata)	
     
     payload = {}
     headers = {
-        'Authorization': 'Bearer %s' % access_token
+        'Authorization': 'Bearer %s' % access_token,
+        'Accept-Encoding' : '*',
+        'x-ads-force': 'true'
     }
     response = requests.get( url, headers=headers, data = payload)
-    content = json.loads(response.text.encode('utf8'))
-    with open("demo.json","w") as f:
-        f.write(response.text)
+    if response.status_code == 200:
+        with open("db//%s.json" % urn,"w") as f:
+            f.write(str(response.text.encode('utf8')))
+
+            time.sleep(5)
 
     return 0 
