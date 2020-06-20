@@ -3,6 +3,12 @@ import json
 from glob import iglob
 import shutil
 import os
+<<<<<<< Updated upstream
+=======
+import time
+from format import applyCategory
+from database import savetoDataBase
+>>>>>>> Stashed changes
 
 credentials_file = r"src\Credentials.txt"
 base_url = 'https://developer.api.autodesk.com/'
@@ -230,96 +236,158 @@ def createChunks(contentByteSize, ByteSizeLimit  = 20000000):
 	resultChunks.append(_range)
 	return resultChunks
 
-def downloadDerivativeObject(urn, derivativeUrn, access_token, fileName):
-	"""Download the object from its derivative urn
-
-	urn : urn of the model
-	
-	derivativeUrn: urn of the object to download
-
-	access_token : access token from credentials
-
-	fileName : name of the file once it's downloaded
-	
-	"""
-	url = base_url+  '/modelderivative/v2/designdata/%s/manifest/%s' % (urn, derivativeUrn)
-	headers = {
-		'Authorization': 'Bearer %s' % access_token
-	}
-	response = requests.head( url, headers=headers)
-
-	if response.status_code != 200:
-		print("Error retrieving derivative heads")
-		return None
-	content = int(response.headers._store['content-length'][1])
-	chunks = createChunks(content)
-
-	with requests.Session() as session:
-		for i, chunk in enumerate(chunks):
-			url = base_url+  '/modelderivative/v2/designdata/%s/manifest/%s' % (urn, derivativeUrn)
-			headers = {
-				'Authorization': 'Bearer %s' % access_token,
-				'Range': chunk
-			}
-			response = session.get( url, headers=headers)
-
-			if response.status_code != 200:
-				with open('db\\%s.part' % i, 'wb') as f:
-					f.write(response.content)
-
-
-	#Join parts
-	dbFolder = 'db\\'
-	dbDestinationPath = r'db\\%s.sdb' % fileName.replace("urn:adsk.wipprod:dm.lineage:","")
-	destination = open(dbDestinationPath, 'wb')
-	for filename in iglob(os.path.join(dbFolder, '*.part')):
-		shutil.copyfileobj(open(filename, 'rb'), destination)
-		os.remove(filename)
-	destination.close()
-
-	if destination.closed():
-		return True
-	return False
-
-
-
-def getRVTObject( projectId, RVTurn):
-	global access_token
-	access_token = Authenticate()
-	urn  = getItemDerivativeURN(projectId, RVTurn, access_token)
-	dbUrn = getObjectDerivativeUrn(urn, access_token, 'json')
-	isDownloaded = downloadDerivativeObject(urn, dbUrn, access_token, RVTurn['id']+".json" )
-	if isDownloaded:
-		print("Model %s object Downloaded" % RVTurn)
-
 
 def getDBFilesFromHub():
-	"""Download all Revit models DB files from the hub
+    """Download all Revit models DB files from the hub
 
-	"""
-	global access_token
+    """
+    global access_token
 
-	access_token = Authenticate()
-	if not access_token:
-		print("Error retriving token")
-		return
-	print("Credentials OK")
+    access_token = Authenticate()
+    if not access_token:
+        print("Error retriving token")
+        return
+    print("Credentials OK")
 
-	hubId = getHub(access_token, 'ADN')
-	if not hubId:
-		print("Error retriving hub")
-		return
-	print("Hub OK")
+    hubId = getHub(access_token, 'ADN')
+    if not hubId:
+        print("Error retriving hub")
+        return
+    print("Hub OK")
 
-	projects = getProjects(hubId)
-	if not projects:
-		print("Error retriving projects")
-		return
+    projects = getProjects(hubId)
+    if not projects:
+        print("Error retriving projects")
+        return
 
 
-	print("Projects OK")
-	for project in projects:
-		projectfolder=get_topfolders(hubId,project,access_token)
-		projectRVTs = []
-		visitFoldersForRvtsURN(projectfolder, project, access_token, projectRVTs)
-		[getRVTObject( project, RVTUrn) for RVTUrn in projectRVTs]
+    print("Projects OK")
+    for project in projects:
+        projectfolder=get_topfolders(hubId,project,access_token)
+        projectRVTs = []
+        visitFoldersForRvtsURN(projectfolder, project, access_token, projectRVTs)
+        [getJsonFiles( project, RVTUrn) for RVTUrn in projectRVTs]
+
+
+def downloadmodelthree(urn, guid, access_token, fileName):
+    """Download the object from its derivative urn
+    urn : urn of the model
+    
+    derivativeUrn: urn of the object to download
+    access_token : access token from credentials
+    fileName : name of the file once it's downloaded
+    
+    """
+    
+    url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s' % (urn, guid)
+    headers = {
+        'Authorization': 'Bearer %s' % access_token
+    }
+    response = requests.head( url, headers=headers)
+
+    if response.status_code != 200:
+        print("Error retrieving derivative heads")
+        return None
+    content = int(response.headers._store['content-length'][1])
+    chunks = createChunks(content)
+
+    with requests.Session() as session:
+        for i, chunk in enumerate(chunks):
+            url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s' % (urn, guid)
+            headers = {
+                'Authorization': 'Bearer %s' % access_token,
+                'Range': chunk
+            }
+            response = session.get( url, headers=headers)
+
+            if response.status_code != 200:
+                with open('db\\%s.part' % i, 'wb') as f:
+                    f.write(response.content)
+
+
+    #Join parts
+    dbFolder = 'db\\'
+    dbDestinationPath = r'db\\%s.sdb' % fileName.replace("urn:adsk.wipprod:dm.lineage:","")
+    destination = open(dbDestinationPath, 'wb')
+    for filename in iglob(os.path.join(dbFolder, '*.part')):
+        shutil.copyfileobj(open(filename, 'rb'), destination)
+        os.remove(filename)
+    destination.close()
+
+    if destination.closed():
+        return True
+    return False
+
+    
+def getItemMetadata(urn,access_token):
+    """Returns the item derivative urn
+
+    project_id : id of the project
+    
+    item_id : id of the item
+        
+    access_token : access token from credentials
+    """
+    url = base_url + '/modelderivative/v2/designdata/%s/metadata' % urn
+    payload = {}
+    headers = {
+        'Authorization': 'Bearer %s' % access_token
+    }
+    response = requests.get( url, headers=headers, data = payload)
+    if response.status_code == 200:
+        content = json.loads(response.text.encode('utf8'))
+        if content['data']["metadata"]:
+            return content['data']["metadata"][0]['guid']
+    return None
+
+
+
+    
+def getJsonFiles( projectId, RVTurn):
+    global access_token
+    access_token = Authenticate()
+    urn  = getItemDerivativeURN(projectId, RVTurn, access_token)
+    #dbUrn = getObjectDerivativeUrn(urn, access_token, 'svf')
+    metadata=getItemMetadata(urn,access_token)
+
+    if not metadata:
+        print("Error with model %s metadata" % RVTurn['id'])
+        return
+
+    jsonObject = getItemMetadataUid(urn, access_token, metadata)
+
+    if not jsonObject:
+        print("Error with model %s json" % RVTurn['id'])
+        return
+
+    objectForMongo = applyCategory(jsonObject['data']['collection'], projectId, metadata)
+
+    isInserted = savetoDataBase(objectForMongo)
+
+
+def getItemMetadataUid(urn,access_token,metadata):
+    """Returns the item derivative urn
+
+    project_id : id of the project
+    
+    item_id : id of the item
+        
+    access_token : access token from credentials
+    """
+    url = base_url+  'modelderivative/v2/designdata/%s/metadata/%s/properties' % (urn, metadata)	
+    
+    payload = {}
+    headers = {
+        'Authorization': 'Bearer %s' % access_token,
+        'Accept-Encoding' : '*',
+        'x-ads-force': 'true'
+    }
+    response = requests.get( url, headers=headers, data = payload)
+    if response.status_code == 200:
+
+        text = response.text
+        jsonObject = json.loads(text)
+        time.sleep(5)
+        return jsonObject
+
+    return 0 
