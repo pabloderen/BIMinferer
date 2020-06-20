@@ -4,3 +4,4 @@ CredentialsFile.txt
 src/Credentials.txt
 *.sdb
 *.part
+src/scrapper/Credentials.txt
