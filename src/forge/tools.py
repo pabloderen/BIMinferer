@@ -3,6 +3,34 @@ from glob import iglob
 import json 
 import pandas as pd
 
+def createChunks(contentByteSize, ByteSizeLimit  = 20000000):
+    '''
+    Create range chunks for the header based on the content length and a base size limit
+    (default 20mb)
+
+    contentByteSize : size of content in bytes
+
+    ByteSizeLimit : size of chunks in bytes (default = 20000000)
+    '''
+
+    if contentByteSize < ByteSizeLimit:
+        return ['bytes=0-%s' % contentByteSize]
+    
+    minChunkRange = 0
+    resultChunks = []
+    for s in range(ByteSizeLimit,contentByteSize, ByteSizeLimit):
+        if s> contentByteSize:
+            s = contentByteSize
+        _range = 'bytes=%s-%s' % (minChunkRange,s)
+        resultChunks.append(_range)
+        minChunkRange = s+1
+
+    _range = 'bytes=%s-%s' % (minChunkRange,contentByteSize)
+    resultChunks.append(_range)
+    return resultChunks
+
+
+
 
 categoryList = ["Air Terminals",
 "Analytical Beams",
