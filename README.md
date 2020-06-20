@@ -1,11 +1,29 @@
 # BIMnferer
 
-* Python 3.6
+* Python =< 3.6 
 * MondoDB
 
+## Set credentials
+
+To use the scrapper you need to set your credentials o a file named *Credentials.txt* inside src\scrapper\Credentials.txt. 
+
+The file should be set as:
+
+```
+Consumer Key: <forgeClientKey>
+Consumer Secret: <forgeClientSecret>
+```
 
 
 ## Execution
+
+* Optional, create a new environment
+
+```
+pip install virtualenv 
+virtualenv bimferer
+bimferer\Scripts\activate
+```
 
 * Install the python scripts dependencies
 ```
