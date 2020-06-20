@@ -9,7 +9,7 @@ from .tools import createChunks, applyCategory
 
 projects = {}
 
-credentials_file = r"src\Credentials.txt"
+credentials_file = r"src\scrapper\Credentials.txt"
 base_url = 'https://developer.api.autodesk.com/'
 access_token = ""
 current_hub_name = "ADN" 
