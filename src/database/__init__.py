@@ -6,17 +6,17 @@ client = MongoClient('localhost', 27017)
 db = client['bimferer']
 collection_models = db['models']
 
+def processObjectAsDictionary(object):
+
+        objAsDictionary = pd.json_normalize(object).to_dict("records")[0]
+        d  =  {key.replace('.','_'): value for key, value in objAsDictionary.items()}
+        return d
 
 
-def savetoDataBase(object):
-    df = pd.json_normalize(object).to_dict("records")
-    #sanitaze jsons
-    dicto =   []
-    for e in df:
-        newElement = {}
-        for key in e:
-            newElement[key.replace(".","_")] = e[key]
-        dicto.append(newElement)
+def savetoDataBase(jsonObject):
 
-    collection_models.insert_many(dicto)
+    processJsonObject = [processObjectAsDictionary(o) for o in jsonObject]
+
+
+    collection_models.insert_many(processJsonObject)
     return True
