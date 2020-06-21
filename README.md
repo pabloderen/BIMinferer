@@ -50,27 +50,7 @@ python3 -m flask run --host=0.0.0.0
 ```
 * Access the API
 
-This implementation has 3 endpoints available
-
-**/api/1/elements/$category**
-
-Return elements per category
-
-
-**/api/1/elements/categories**
-
-Return all elements of the categories provided in the body of the request.
-``` 
-"{   "categories":[
-      "Ducts",
-      "Pipes"
-      ]
-    }"
-```
-
-**/api/1/elements/mep**
-
-Return all MEP elements
+Go to http://localhost:5000/apidocs and check the API endpoints available
 
 
 ## Debug 
@@ -105,4 +85,4 @@ If you are using VS Code, setup your launch.json to be able to debug the server 
 
 ### Demo
 
-http://3.14.88.102:5000
+http://3.14.88.102:5000/apidocs/
