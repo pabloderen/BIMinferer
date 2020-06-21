@@ -42,10 +42,11 @@ python3.exe .\src\scrapper\main.py
 ```
 
 * Run Server
-To execute in windows
+To execute on linux
 
 ```
-python3.exe .\src\server\server.py
+$export FLASK_APP=server.py
+python3 -m flask run --host=0.0.0.0
 ```
 * Access the API
 
