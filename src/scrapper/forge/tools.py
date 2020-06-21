@@ -190,9 +190,10 @@ def applyCategory(collection, projectId, modelId):
         if 'properties' not in element and element['name'] in categoryList:
             category = element['name']
         else:
-            element['projectId'] = projectId
-            element["Category"] = category
-            element['modelId'] = modelId
-            resultCollection.append(element)
+            if category not in "Model":
+                element['projectId'] = projectId
+                element["Category"] = category
+                element['modelId'] = modelId
+                resultCollection.append(element)
     
     return resultCollection

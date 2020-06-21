@@ -15,8 +15,7 @@ def processObjectAsDictionary(object):
 
 def savetoDataBase(jsonObject):
 
-    processJsonObject = [processObjectAsDictionary(o) for o in jsonObject]
-
-
-    collection_models.insert_many(processJsonObject)
+    if jsonObject:
+        processJsonObject = [processObjectAsDictionary(o) for o in jsonObject]
+        collection_models.insert_many(processJsonObject)
     return True
