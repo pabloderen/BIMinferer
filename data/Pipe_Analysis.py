@@ -17,9 +17,9 @@ model_1=pd.DataFrame(index=column).T
 model_1
 #here we ask for the Values:
 
-Size=input("Size: ")
-Length=float(input("Length: "))
-Classification=input("Classification: ")
+Size=input("Size: ") # The Size of the Diameters is ingresed like: '1 1/2"', '1 1/4"', '1 3/8"', '1"', '1/2"'
+Length=float(input("Length: ")) # The lenfth has to be inputted as: 4.56 format
+Classification=input("Classification: ") #You can input a System Classification like: "Domestic Cold Water", "Sanitary", "Fire Protection Wet","Vent"
 values={"Size":Size,"Length":Length,"Classification":Classification}
 
 values
